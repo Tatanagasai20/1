@@ -146,20 +146,66 @@ npm start           # Start development server
 npm run build       # Build for production
 ```
 
-## 🐳 Docker Deployment
+## 🐳 Docker Deployment (Separate Containers)
 
-### Build Image:
+### Quick Start with Docker:
 ```bash
-docker build -t kickstart-portal .
+# 1. Configure environment
+cp .env.example .env
+# Edit .env with your AWS RDS credentials
+
+# 2. Build and run all containers
+./docker-run.sh
+
+# Or manually:
+docker-compose up --build -d
 ```
 
-### Run Container:
+### Individual Container Management:
+
+#### Build Containers:
 ```bash
+./docker-build.sh
+```
+
+#### Run with Docker Compose:
+```bash
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+
+# Restart services
+docker-compose restart
+```
+
+#### Container Architecture:
+- **Frontend**: React app served by Nginx (port 3000)
+- **Backend**: Node.js API server (port 5000)
+- **Database**: PostgreSQL (optional, for local development)
+- **Nginx**: Reverse proxy (port 80)
+
+### Manual Docker Commands:
+```bash
+# Build backend
+cd server && docker build -t kickstart-backend .
+
+# Build frontend
+cd client && docker build -t kickstart-frontend .
+
+# Run backend
 docker run -p 5000:5000 \
   -e DB_HOST=your-rds-endpoint \
   -e DB_PASSWORD=your-password \
   -e JWT_SECRET=your-secret \
-  kickstart-portal
+  kickstart-backend
+
+# Run frontend
+docker run -p 3000:80 kickstart-frontend
 ```
 
 ## 🌐 Production Deployment
