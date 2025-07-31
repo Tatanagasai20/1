@@ -29,8 +29,9 @@ Frontend (React) ←→ Backend (Node.js) ←→ Database (PostgreSQL on AWS RDS
 
 ### Prerequisites
 - Node.js 18+
-- AWS Account (for database)
-- PostgreSQL client (optional)
+- AWS Account (for database and deployment)
+- Docker (for containerization)
+- AWS CLI (for deployment)
 
 ### 1. Clone Repository
 ```bash
@@ -45,19 +46,34 @@ cd kickstart-portal
 
 ### 3. Configure Environment
 ```bash
-cd server
 cp .env.example .env
 # Edit .env with your database credentials
 ```
 
 ### 4. Start Application
-```bash
-# Option 1: Use the start script
-./start.sh
 
-# Option 2: Manual start
-cd server && npm install && npm run dev
-cd client && npm install && npm start
+#### Local Development:
+```bash
+# Install dependencies
+npm run install-all
+
+# Start development servers
+npm run dev
+```
+
+#### Docker Development:
+```bash
+# Build and run with Docker
+./docker-run.sh
+```
+
+#### AWS Deployment:
+```bash
+# Build and push containers to ECR
+./aws-deploy.sh
+
+# Deploy with CloudFormation (after setting up RDS)
+aws cloudformation deploy --template-file aws-deployment.yml --stack-name kickstart-portal --capabilities CAPABILITY_IAM
 ```
 
 ## 📋 Database Setup

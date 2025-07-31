@@ -5,7 +5,8 @@
 ### Prerequisites
 - Node.js 18+ installed
 - AWS Account
-- Docker (optional, for containerization)
+- Docker (for containerization)
+- AWS CLI (for deployment)
 
 ## 📋 Step-by-Step Deployment
 
