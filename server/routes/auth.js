@@ -1,29 +1,8 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const pool = require('../config/database');
 const router = express.Router();
-
-// Mock user data (in production, this would be in a database)
-const users = [
-  {
-    id: 1,
-    email: 'admin@kickstart.com',
-    password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
-    name: 'Admin User',
-    role: 'admin',
-    department: 'IT',
-    employeeId: 'EMP001'
-  },
-  {
-    id: 2,
-    email: 'employee@kickstart.com',
-    password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
-    name: 'John Doe',
-    role: 'employee',
-    department: 'Engineering',
-    employeeId: 'EMP002'
-  }
-];
 
 // Login route
 router.post('/login', async (req, res) => {
@@ -37,7 +16,12 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    const user = users.find(u => u.email === email);
+    const result = await pool.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email]
+    );
+
+    const user = result.rows[0];
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -75,7 +59,7 @@ router.post('/login', async (req, res) => {
           email: user.email,
           role: user.role,
           department: user.department,
-          employeeId: user.employeeId
+          employee_id: user.employee_id
         }
       }
     });
@@ -100,8 +84,13 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    const existingUser = users.find(u => u.email === email);
-    if (existingUser) {
+    // Check if user already exists
+    const existingUser = await pool.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email]
+    );
+
+    if (existingUser.rows.length > 0) {
       return res.status(400).json({
         success: false,
         message: 'User already exists'
@@ -109,17 +98,17 @@ router.post('/register', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = {
-      id: users.length + 1,
-      name,
-      email,
-      password: hashedPassword,
-      role: 'employee',
-      department,
-      employeeId: `EMP${String(users.length + 1).padStart(3, '0')}`
-    };
+    
+    // Generate employee ID
+    const employeeCount = await pool.query('SELECT COUNT(*) FROM users');
+    const employeeId = `EMP${String(parseInt(employeeCount.rows[0].count) + 1).padStart(3, '0')}`;
 
-    users.push(newUser);
+    const result = await pool.query(
+      'INSERT INTO users (name, email, password, role, department, employee_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [name, email, hashedPassword, 'employee', department, employeeId]
+    );
+
+    const newUser = result.rows[0];
 
     const token = jwt.sign(
       { 
@@ -143,7 +132,7 @@ router.post('/register', async (req, res) => {
           email: newUser.email,
           role: newUser.role,
           department: newUser.department,
-          employeeId: newUser.employeeId
+          employee_id: newUser.employee_id
         }
       }
     });
